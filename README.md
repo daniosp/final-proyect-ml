@@ -12,18 +12,20 @@ that wants to support its brokers with evidence from its own historical sales:
 | Q3 | Which improvements are a **profitable investment**? | What-if uplift simulation, break-even cost, external cost benchmarks |
 | Q4 | Are there **market segments** that behave differently? | Clustering and supervised segmentation |
 
-> Status: **Phase 0 (environment) and Phase 1 (data quality audit and cleaning) complete.** This README is updated as
-> each phase of the analysis is completed.
+> Status: **All phases (0–7) and the client-facing executive deck are complete on branch `ACC`.**
 
 ## Progress
 
 | Phase | Notebook section | Status |
 |---|---|---|
 | 0. Reproducible environment | 0 | Done |
-| 1. Data quality audit and cleaning | 1 | Done (Lot Frontage drop pending review) |
-| 2. Exploratory analysis and variable selection | 2 | Next |
-| 3–6. Q1–Q4 | 3–6 | To do |
-| 7. Conclusions and figures for the deck | 7 | To do |
+| 1. Data quality audit and cleaning | 1 | Done (incl. `Garage Cars = 99` repair) |
+| 2. Exploratory analysis and feature engineering | 2 | Done (`DROP_LOT_FRONTAGE` confirmed via CV) |
+| 3. Q1 — Price range model (Blend + 80% CQR intervals) | 3 | Done |
+| 4. Q2 — Price drivers (Structural/Location vs Modifiable) | 4 | Done |
+| 5. Q3 — Improvement ROI (counterfactuals vs cost benchmarks) | 5 | Done |
+| 6. Q4 — Market segmentation (K-Means + PCA) | 6 | Done |
+| 7. Conclusions, deck & summary | 7 | Done (`main/Clearview_Properties_Executive_Deck.pdf`) |
 
 ## Repository structure
 
@@ -37,15 +39,16 @@ proyecto-final-ml/
 │       ├── clean_all_sales.csv   #   all valid sales after repairs
 │       └── analysis_sample.csv   #   sales used by the price models (Normal + new homes, <= 4,000 sqft)
 ├── main/
-│   ├── clearview_analysis.ipynb # technical notebook: full end-to-end workflow
-│   └── figures/                 # charts exported by the notebook (used for the client deck)
+│   ├── clearview_analysis.ipynb               # technical notebook: full end-to-end workflow
+│   ├── Clearview_Properties_Executive_Deck.pdf # 11-slide non-technical client presentation
+│   └── figures/                               # charts exported by the notebook
 ├── task_info/                   # project brief
 ├── pyproject.toml               # dependencies
 ├── uv.lock                      # exact pinned versions (reproducible environment)
 └── .python-version              # Python 3.12
 ```
 
-The client-facing presentation is produced separately from the notebook.
+The client-facing presentation (`main/Clearview_Properties_Executive_Deck.pdf`) translates all findings into business language across 11 slides.
 
 ## Setup
 
@@ -103,17 +106,14 @@ The full log is in `data/processed/data_quality_log.csv` and in Section 1 of the
 
 - **Never invent a sale price:** 26 rows with a missing, negative or placeholder price are removed.
 - **Repairs use evidence in the same row:** text formats, lot areas recorded in square meters, inconsistent category
-  labels, impossible years and unknown neighborhoods (recovered from the nearest parcel ID, 98.8% accurate) are fixed.
+  labels, impossible years, sentinel garage capacities (`Garage Cars = 99`), and unknown neighborhoods (recovered from the nearest parcel ID, 98.8% accurate) are fixed.
   Duplicate records of the same sale are collapsed to one.
 - **Features that don't exist** (no pool, no garage, ...) are encoded as `"Absent"`, not imputed. Real gaps are imputed
   inside the model pipeline, which is fitted on training data only.
 - **Analysis sample:** open-market sales (Normal and new homes, flagged `is_new_home`) up to 4,000 sqft of living area.
   Foreclosure-type, family, allocation and land-adjoining sales are excluded as non-market prices.
-- **Lot Frontage** is dropped (provisional, pending review): it adds no information beyond Lot Area, and its gaps are
-  concentrated on cul-de-sac lots. To reverse this, set `DROP_LOT_FRONTAGE = False` in Section 1.6.
+- **Lot Frontage** is dropped (`DROP_LOT_FRONTAGE = True`): confirmed via 5-fold training CV (0.02 pp MAPE difference), while avoiding non-random imputation on cul-de-sac lots.
 
 ## Use of AI tools
 
-As the brief requires, the use of AI tools is declared in the notebook. Claude (Anthropic), through Claude Code,
-was used as a pair-programming assistant: setting up the environment, writing code and proposing methodological
-alternatives. Methodological decisions were discussed and made by the author at each phase.
+As the brief requires, the use of AI tools is declared in the notebook. Claude (Anthropic, via Claude Code) was used during initial Phase 0–1 setup, and Google Antigravity (Gemini) was used to extend the audit, complete Phases 2–7, verify reproducibility, and generate the executive presentation. All methodological choices and results were verified against executed outputs.
