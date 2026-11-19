@@ -58,8 +58,11 @@ Python version (3.12) automatically.
 ```bash
 git clone <repo-url>
 cd proyecto-final-ml
-uv sync            # creates .venv with the exact versions from uv.lock
+uv sync --locked   # creates .venv with the exact versions from uv.lock (fails if the lock is out of date)
 ```
+
+**Adding a dependency:** use `uv add <package>`, which updates `pyproject.toml` *and* `uv.lock` together, and commit
+both files. Editing `pyproject.toml` by hand leaves the lock out of date, so `uv sync --locked` fails.
 
 > If `uv` fails with `invalid peer certificate: UnknownIssuer` (common behind corporate proxies or antivirus TLS
 > inspection), tell it to trust the operating system certificate store:
@@ -76,7 +79,10 @@ uv run jupyter lab main/clearview_analysis.ipynb
 In VS Code, open the notebook and select the `.venv` interpreter (`.venv/Scripts/python.exe` on Windows,
 `.venv/bin/python` on macOS/Linux) as the kernel.
 
-Headless, end to end (the notebook is reproducible with *Restart & Run All*):
+Always run the notebook in this environment. Its first code cell stops with an error if the kernel is not Python 3.12,
+and it prints the versions of the main libraries.
+
+Headless, end to end (the notebook is reproducible with *Restart & Run All*, about 5 minutes on a laptop):
 
 ```bash
 uv run jupyter nbconvert --to notebook --execute --inplace main/clearview_analysis.ipynb
@@ -87,8 +93,15 @@ uv run jupyter nbconvert --to notebook --execute --inplace main/clearview_analys
 - **Pinned environment:** `uv.lock` fixes every package version. Python is pinned to 3.12 in `.python-version`
   and `pyproject.toml`.
 - **Seeds:** the notebook defines one constant, `SEED = 42`, in its first code cell. It seeds Python's `random`
-  and NumPy, and is passed as `random_state` to every train/test split, cross-validation splitter, model,
-  clustering algorithm and bootstrap in the notebook. Changing `SEED` in that one place changes every random step.
+  and NumPy, and is passed as `random_state` to every train/test split, cross-validation splitter, model and
+  clustering algorithm. Bootstraps and permutations each get their own generator from `rng_for(task)`, derived from
+  `SEED` and the task name, so a task's result does not depend on which cells ran before it. Changing `SEED` in that
+  one place changes every random step.
+- **Deterministic models:** LightGBM runs with `deterministic=True` and `force_row_wise=True`, so it gives the same
+  result for any number of CPU threads. scikit-learn models are deterministic given `random_state`.
+- **Verified:** two consecutive headless runs produce identical outputs in every cell. They also match the results
+  committed in commit `f007d7e`. The only exception is the fit and inference **timings** reported in Section 3, which
+  depend on the machine.
 - **Raw data is read-only:** all cleaning is done in code inside the notebook, and the cleaned dataset is written to
   `data/processed/`.
 - **Relative paths:** the notebook finds the project root by itself, so it runs from any working directory.
