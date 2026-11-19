@@ -142,6 +142,17 @@ The full log is in `data/processed/data_quality_log.csv` and in Section 1 of the
   every candidate. The glossary (`data/processed/variable_glossary.csv`) explains every variable's fate.
 - **Linear models** apply log(1 + x) to skewed amounts inside their pipeline; tree models use the original values.
 
+## Key modeling decisions (Section 3, Q1)
+
+- **Model choice:** five candidate models, each tuned by cross-validation on the training set. A blend is used only
+  if it beats the best single model by more than one standard error (rule fixed in advance). It does, and its
+  weights (Ridge, LightGBM, HistGradientBoosting) are learned from out-of-fold predictions.
+- **Test set:** used once, at the end, with paired bootstrap intervals; a time-based check (2006-2009 -> 2010) is
+  also reported.
+- **Price range:** the reference price is the typical (median) price; the 80% listing range and 50% negotiation band
+  come from conformal calibration around the final model, per predicted price tier. `valuation_card()` produces
+  them for any home.
+
 ## Use of AI tools
 
 As the brief requires, the use of AI tools is declared in the notebook. Claude (Anthropic, via Claude Code) was used during initial Phase 0–1 setup, and Google Antigravity (Gemini) was used to extend the audit, complete Phases 2–7, verify reproducibility, and generate the executive presentation. All methodological choices and results were verified against executed outputs.
