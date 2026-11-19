@@ -153,6 +153,15 @@ The full log is in `data/processed/data_quality_log.csv` and in Section 1 of the
   come from conformal calibration around the final model, per predicted price tier. `valuation_card()` produces
   them for any home.
 
+## Key modeling decisions (Section 6, Q4)
+
+- **Segments from physical characteristics only** (size, lot, age, quality, condition, bathrooms, garage); price,
+  location and new-home status describe the segments afterwards.
+- **Number of segments by a rule fixed in advance** (stable under resampling, smallest segment >= 5% of sales,
+  highest silhouette): two segments, older/smaller and newer/larger homes, with moderate separation.
+- **"Behave differently" is tested directly:** driver effects per segment with neighborhood controls and a joint
+  F-test; one global price model is kept because per-segment models are not more accurate.
+
 ## Use of AI tools
 
 As the brief requires, the use of AI tools is declared in the notebook. Claude (Anthropic, via Claude Code) was used during initial Phase 0–1 setup, and Google Antigravity (Gemini) was used to extend the audit, complete Phases 2–7, verify reproducibility, and generate the executive presentation. All methodological choices and results were verified against executed outputs.
