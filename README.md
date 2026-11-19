@@ -119,13 +119,15 @@ The full log is in `data/processed/data_quality_log.csv` and in Section 1 of the
 
 - **Never invent a sale price:** 26 rows with a missing, negative or placeholder price are removed.
 - **Repairs use evidence in the same row:** text formats, lot areas recorded in square meters, inconsistent category
-  labels, impossible years, sentinel garage capacities (`Garage Cars = 99`), and unknown neighborhoods (recovered from the nearest parcel ID, 98.8% accurate) are fixed.
+  labels, impossible years, placeholder garage capacities (`Garage Cars = 99`, replaced using the garage's area), missing build years (earlier of
+  garage and remodel year), and unknown neighborhoods (recovered from the nearest parcel ID, 98.8% accurate) are fixed.
   Duplicate records of the same sale are collapsed to one.
 - **Features that don't exist** (no pool, no garage, ...) are encoded as `"Absent"`, not imputed. Real gaps are imputed
   inside the model pipeline, which is fitted on training data only.
 - **Analysis sample:** open-market sales (Normal and new homes, flagged `is_new_home`) up to 4,000 sqft of living area.
   Foreclosure-type, family, allocation and land-adjoining sales are excluded as non-market prices.
-- **Lot Frontage** is dropped (`DROP_LOT_FRONTAGE = True`): confirmed via 5-fold training CV (0.02 pp MAPE difference), while avoiding non-random imputation on cul-de-sac lots.
+- **Lot Frontage** is dropped (team decision): it adds no price information beyond Lot Area, does not improve
+  cross-validated error, and its gaps are concentrated on cul-de-sac lots.
 
 ## Use of AI tools
 
