@@ -37,7 +37,8 @@ proyecto-final-ml/
 │   └── processed/               # written by the notebook (git-ignored, regenerated on every run):
 │       ├── data_quality_log.csv  #   every issue found, rows affected, action taken and rationale
 │       ├── clean_all_sales.csv   #   all valid sales after repairs
-│       └── analysis_sample.csv   #   sales used by the price models (Normal + new homes, <= 4,000 sqft)
+│       ├── analysis_sample.csv   #   sales used by the price models (Normal + new homes, <= 4,000 sqft)
+│       └── variable_glossary.csv #   every candidate variable: meaning, link to price, kept/dropped and why
 ├── main/
 │   ├── clearview_analysis.ipynb               # technical notebook: full end-to-end workflow
 │   ├── Clearview_Properties_Executive_Deck.pdf # 11-slide non-technical client presentation
@@ -130,6 +131,16 @@ The full log is in `data/processed/data_quality_log.csv` and in Section 1 of the
   Foreclosure-type, family, allocation and land-adjoining sales are excluded as non-market prices.
 - **Lot Frontage** is dropped (team decision): it adds no price information beyond Lot Area, does not improve
   cross-validated error, and its gaps are concentrated on cul-de-sac lots.
+
+## Key modeling decisions (Section 2)
+
+- **Training data only:** the 80/20 train/test split comes first; all exploration and variable selection use the
+  training set, so the test set never influences a decision.
+- **Target:** models predict log(price), so errors behave as percentages.
+- **Variable selection (Section 2.7):** nearly constant variables and true duplicates are removed, and the number of
+  variables follows a one-standard-error rule against the full candidate set. The selected set is as accurate as using
+  every candidate. The glossary (`data/processed/variable_glossary.csv`) explains every variable's fate.
+- **Linear models** apply log(1 + x) to skewed amounts inside their pipeline; tree models use the original values.
 
 ## Use of AI tools
 
