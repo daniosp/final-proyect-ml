@@ -12,7 +12,8 @@ that wants to support its brokers with evidence from its own historical sales:
 | Q3 | Which improvements are a **profitable investment**? | What-if uplift simulation, break-even cost, external cost benchmarks |
 | Q4 | Are there **market segments** that behave differently? | Clustering and supervised segmentation |
 
-> Status: **All phases (0–7) and the client-facing executive deck are complete on branch `ACC`.**
+> Status: all sections reviewed (Sections 0-7) on branch `ACC`. The executive deck predates the review and
+> needs updating to the final results.
 
 ## Progress
 
@@ -83,7 +84,7 @@ In VS Code, open the notebook and select the `.venv` interpreter (`.venv/Scripts
 Always run the notebook in this environment. Its first code cell stops with an error if the kernel is not Python 3.12,
 and it prints the versions of the main libraries.
 
-Headless, end to end (the notebook is reproducible with *Restart & Run All*, about 5 minutes on a laptop):
+Headless, end to end (the notebook is reproducible with *Restart & Run All*; a full run takes roughly 10-15 minutes on a laptop, mostly model tuning and refits in Sections 3-5):
 
 ```bash
 uv run jupyter nbconvert --to notebook --execute --inplace main/clearview_analysis.ipynb
@@ -152,6 +153,22 @@ The full log is in `data/processed/data_quality_log.csv` and in Section 1 of the
 - **Price range:** the reference price is the typical (median) price; the 80% listing range and 50% negotiation band
   come from conformal calibration around the final model, per predicted price tier. `valuation_card()` produces
   them for any home.
+
+## Key modeling decisions (Section 4, Q2)
+
+- **Five groups of characteristics with a written rule** (location and lot, structure and size, owner-modifiable,
+  overall ratings, sale circumstances); every model variable is assigned exactly once.
+- **Two importance measures:** information lost when a group is shuffled (test set) and unique contribution when the
+  model is refitted without it (cross-validation).
+- **Location premium** from an unpenalized regression with neighborhood terms: the same house in different
+  neighborhoods.
+
+## Key modeling decisions (Section 5, Q3)
+
+- **Main result: break-even cost** (the price uplift of each improvement, from what-if simulations with the final
+  model on Normal resales), with a range from 30 refits on resampled data.
+- **Cost ranges are unsourced, illustrative assumptions** in one editable table (`COST_ASSUMPTIONS`); verdicts that
+  depend on them say so. The "+1 overall quality" kitchen scenario is reported as an upper bound.
 
 ## Key modeling decisions (Section 6, Q4)
 
