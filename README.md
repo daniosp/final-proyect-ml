@@ -92,8 +92,10 @@ The reasons for each decision are in the notebook's decision boxes; these are th
 - **Figures:** `main/figures/`, numbered by section.
 - **Data files:** `data/processed/`. The data quality log records every issue, the rows affected, the action taken
   and why. The variable glossary records each variable's meaning and whether it was kept.
-- **Model:** `models/clearview_price_model.joblib` holds the fitted models, blend weights and range calibration. The
-  model card in Section 7 shows how to load it, and checks that it reproduces the notebook's valuations.
+- **Model:** `models/clearview_price_model.joblib` holds the fitted models, blend weights, range calibration and the
+  formulas for the computed inputs. It prices any cleaned sale record (the columns of
+  `data/processed/analysis_sample.csv`). The model card in Section 7 shows how to use it, and checks that from the CSV
+  on disk it reproduces the notebook's price and range for every test home.
 
 ## Use of AI tools
 
