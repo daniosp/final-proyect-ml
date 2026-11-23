@@ -2,118 +2,104 @@
 
 Final project for the *Aprendizaje Automático* (Machine Learning) course, MSc in Engineering Sciences, EAFIT (2026-2).
 
-The project answers a consulting brief (`task_info/Brief_Candidate_DataScientist.docx`) for a real estate agency
-that wants to support its brokers with evidence from its own historical sales:
+A real estate agency wants its brokers to use evidence from about 2,960 of its past home sales (2006–2010). The brief
+(`task_info/Brief_Candidate_DataScientist.docx`) asks four questions, which the notebook answers:
 
-| # | Business question | Approach (summary) |
-|---|---|---|
-| Q1 | What is a reasonable listing **price range** for a property? | Price model with prediction intervals |
-| Q2 | Which characteristics **drive price**, split into owner-modifiable vs structural/location? | Model-based importance and effect sizes |
-| Q3 | Which improvements are a **profitable investment**? | What-if uplift simulation, break-even cost, external cost benchmarks |
-| Q4 | Are there **market segments** that behave differently? | Clustering and supervised segmentation |
+| # | Question | How it is answered | Notebook |
+|---|---|---|---|
+| Q1 | What listing **price range** fits a home? | A blend of three tuned models, with listing ranges calibrated per price tier | Section 3 |
+| Q2 | What **drives price**: what an owner can change, or structure and location? | Importance of groups of characteristics, plus location premiums | Section 4 |
+| Q3 | Which **improvements** pay for themselves? | Simulated price uplift (= break-even cost), compared with published 2008 costs | Section 5 |
+| Q4 | Are there **market segments** that behave differently? | Clustering on physical characteristics, then testing whether price drivers differ | Section 6 |
 
-> Status: **Phase 0 (environment) and Phase 1 (data quality audit and cleaning) complete.** This README is updated as
-> each phase of the analysis is completed.
+## Where to start
 
-## Progress
+Open `main/clearview_analysis.ipynb`. The first cell has an **executive summary** (one answer per question, linked to
+the evidence) and a table of contents. Each section opens with an **"In brief"** box and ends with a **"Decisions and
+rationale"** box. Code cells are collapsed, so the text, tables and figures read as a report; expand a cell to see
+its code. All numbers are printed by code, and the text refers to those outputs. Section 7 collects the answers,
+the limitations, the next steps and a **model card** for operating the price model.
 
-| Phase | Notebook section | Status |
-|---|---|---|
-| 0. Reproducible environment | 0 | Done |
-| 1. Data quality audit and cleaning | 1 | Done (Lot Frontage drop pending review) |
-| 2. Exploratory analysis and variable selection | 2 | Next |
-| 3–6. Q1–Q4 | 3–6 | To do |
-| 7. Conclusions and figures for the deck | 7 | To do |
+## How to run
 
-## Repository structure
-
-```
-proyecto-final-ml/
-├── data/
-│   ├── Data.csv                 # raw transactions as provided by the client (never modified)
-│   ├── Data_Dictionary.txt      # variable descriptions and codes
-│   └── processed/               # written by the notebook (git-ignored, regenerated on every run):
-│       ├── data_quality_log.csv  #   every issue found, rows affected, action taken and rationale
-│       ├── clean_all_sales.csv   #   all valid sales after repairs
-│       └── analysis_sample.csv   #   sales used by the price models (Normal + new homes, <= 4,000 sqft)
-├── main/
-│   ├── clearview_analysis.ipynb # technical notebook: full end-to-end workflow
-│   └── figures/                 # charts exported by the notebook (used for the client deck)
-├── task_info/                   # project brief
-├── pyproject.toml               # dependencies
-├── uv.lock                      # exact pinned versions (reproducible environment)
-└── .python-version              # Python 3.12
-```
-
-The client-facing presentation is produced separately from the notebook.
-
-## Setup
-
-Requirements: [uv](https://docs.astral.sh/uv/getting-started/installation/) (tested with uv 0.12). uv installs the right
-Python version (3.12) automatically.
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/); it installs Python 3.12 by itself.
 
 ```bash
 git clone <repo-url>
 cd proyecto-final-ml
-uv sync            # creates .venv with the exact versions from uv.lock
-```
-
-> If `uv` fails with `invalid peer certificate: UnknownIssuer` (common behind corporate proxies or antivirus TLS
-> inspection), tell it to trust the operating system certificate store:
-> `uv sync --system-certs`, or set the environment variable `UV_SYSTEM_CERTS=1`.
-
-## Running the analysis
-
-Interactive:
-
-```bash
+uv sync --locked                 # exact package versions from uv.lock
 uv run jupyter lab main/clearview_analysis.ipynb
 ```
 
-In VS Code, open the notebook and select the `.venv` interpreter (`.venv/Scripts/python.exe` on Windows,
-`.venv/bin/python` on macOS/Linux) as the kernel.
-
-Headless, end to end (the notebook is reproducible with *Restart & Run All*):
+In VS Code, open the notebook and choose the `.venv` interpreter as the kernel. To run everything without opening it
+(about 13 minutes on a laptop, mostly model tuning and the Q3 refits):
 
 ```bash
 uv run jupyter nbconvert --to notebook --execute --inplace main/clearview_analysis.ipynb
 ```
 
+If uv reports `invalid peer certificate: UnknownIssuer` (common behind antivirus or corporate TLS inspection), add
+`--system-certs` or set `UV_SYSTEM_CERTS=1`. To add a dependency, use `uv add <package>` and commit both
+`pyproject.toml` and `uv.lock`.
+
 ## Reproducibility
 
-- **Pinned environment:** `uv.lock` fixes every package version. Python is pinned to 3.12 in `.python-version`
-  and `pyproject.toml`.
-- **Seeds:** the notebook defines one constant, `SEED = 42`, in its first code cell. It seeds Python's `random`
-  and NumPy, and is passed as `random_state` to every train/test split, cross-validation splitter, model,
-  clustering algorithm and bootstrap in the notebook. Changing `SEED` in that one place changes every random step.
-- **Raw data is read-only:** all cleaning is done in code inside the notebook, and the cleaned dataset is written to
-  `data/processed/`.
-- **Relative paths:** the notebook finds the project root by itself, so it runs from any working directory.
+- **Pinned environment:** `uv.lock` fixes every package; the first code cell stops if the kernel is not Python 3.12.
+- **One seed:** `SEED = 42` drives every split, model and clustering. Each bootstrap or permutation gets its own
+  random generator, derived from the seed and the task name, so results do not depend on which cells ran before.
+- **Deterministic models:** LightGBM runs in deterministic mode, so results do not depend on the number of CPU threads.
+  Only the fit and prediction timings in Section 3 vary between machines.
+- **Raw data is never modified:** all cleaning happens in the notebook, and every issue is logged.
 
-## Data
+## Repository structure
 
-About 2,960 residential sales (2006–2010) with about 80 variables, provided "as is" by the client for academic use.
-`data/Data_Dictionary.txt` describes each variable. The raw file contains data quality problems (duplicates,
-corrupted target values, inconsistent category labels, impossible years). The notebook documents and treats them in
-its data quality section.
+```
+data/
+  Data.csv, Data_Dictionary.txt   raw sales and variable descriptions, as provided by the client
+  processed/                      written by the notebook (git-ignored): data quality log, cleaned data,
+                                  analysis sample, variable glossary
+main/
+  clearview_analysis.ipynb        the full analysis, Sections 0-7
+  figures/                        charts exported by the notebook
+  Clearview_Properties_Executive_Deck.pdf   client presentation, edited by the team
+models/                           saved price model (git-ignored, regenerated on each run)
+task_info/                        the brief
+pyproject.toml, uv.lock           environment
+```
 
-## Key data decisions (Phase 1)
+## Main decisions
 
-The full log is in `data/processed/data_quality_log.csv` and in Section 1 of the notebook.
+The reasons for each decision are in the notebook's decision boxes; these are the ones that shape the results.
 
-- **Never invent a sale price:** 26 rows with a missing, negative or placeholder price are removed.
-- **Repairs use evidence in the same row:** text formats, lot areas recorded in square meters, inconsistent category
-  labels, impossible years and unknown neighborhoods (recovered from the nearest parcel ID, 98.8% accurate) are fixed.
-  Duplicate records of the same sale are collapsed to one.
-- **Features that don't exist** (no pool, no garage, ...) are encoded as `"Absent"`, not imputed. Real gaps are imputed
-  inside the model pipeline, which is fitted on training data only.
-- **Analysis sample:** open-market sales (Normal and new homes, flagged `is_new_home`) up to 4,000 sqft of living area.
-  Foreclosure-type, family, allocation and land-adjoining sales are excluded as non-market prices.
-- **Lot Frontage** is dropped (provisional, pending review): it adds no information beyond Lot Area, and its gaps are
-  concentrated on cul-de-sac lots. To reverse this, set `DROP_LOT_FRONTAGE = False` in Section 1.6.
+- **Cleaning (Section 1):** sale prices are never repaired; invalid ones are removed. Other repairs use evidence from
+  the same record. Empty values mean "feature absent" only where the data dictionary says so.
+- **Scope:** open-market sales (normal and new homes) with up to 4,000 sqft of living area. Foreclosures, family sales
+  and very large homes follow different rules.
+- **No test-set leakage (Sections 2–3):** the 80/20 split comes first. Exploration, variable selection and tuning
+  use the training data only, and the test set is used once.
+- **Rules fixed before results:** the number of variables, whether to blend models, and the number of segments each
+  follow a rule written before the results were seen.
+- **Price ranges (Q1):** model errors on past sales set the width of the 80% listing range and the 50%
+  negotiation band, separately for each price tier.
+- **Drivers (Q2):** association, not causation. Characteristics are grouped by whether an owner can change them.
+- **Improvements (Q3):** the break-even cost is the main result. Published costs (*Remodeling* magazine, Cost vs.
+  Value 2008–09, West North Central region) are used for the four improvements they cover.
+- **Segments (Q4):** clustering uses physical characteristics only. Price and location describe the segments
+  afterwards.
+
+## Outputs
+
+- **Figures:** `main/figures/`, numbered by section.
+- **Data files:** `data/processed/`. The data quality log records every issue, the rows affected, the action taken
+  and why. The variable glossary records each variable's meaning and whether it was kept.
+- **Model:** `models/clearview_price_model.joblib` holds the fitted models, blend weights, range calibration and the
+  formulas for the computed inputs. It prices any cleaned sale record (the columns of
+  `data/processed/analysis_sample.csv`). The model card in Section 7 shows how to use it, and checks that from the CSV
+  on disk it reproduces the notebook's price and range for every test home.
 
 ## Use of AI tools
 
-As the brief requires, the use of AI tools is declared in the notebook. Claude (Anthropic), through Claude Code,
-was used as a pair-programming assistant: setting up the environment, writing code and proposing methodological
-alternatives. Methodological decisions were discussed and made by the author at each phase.
+Claude (Anthropic, through Claude Code) helped set up the environment and the data audit. Google Antigravity
+(Gemini) helped write a first version of Sections 2–7 and of the presentation. Claude was then used to review the
+notebook section by section and to improve its readability. The tools proposed code and alternatives, and the team
+made the decisions. The full statement is in the notebook's first cell.
