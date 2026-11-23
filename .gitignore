@@ -3,6 +3,8 @@
 __pycache__/
 *.py[cod]
 .ruff_cache/
+notes/
+.claude/
 
 # Jupyter
 .ipynb_checkpoints/
